@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:grpc/grpc.dart';
+import 'package:protobuf/well_known_types/google/protobuf/empty.pb.dart';
+import 'package:sapp/data/weather_forecast_service/weather_forecast_service.pbgrpc.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,17 +57,22 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  Future<void> _getWeatherForecast() async {
+    final channel = ClientChannel(
+      '10.0.2.2',
+      port: 7112,
+      options: ChannelOptions(
+        credentials: ChannelCredentials.secure(
+          onBadCertificate: (certificate, host) => host == '10.0.2.2:7112',
+        ),
+      ),
+    );
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+    final client = WeatherForecastServiceClient(channel);
+
+    var response = await client.getWeatherForecast(Empty());
+
+    print(response);
   }
 
   @override
@@ -103,17 +111,11 @@ class _MyHomePageState extends State<MyHomePage> {
           // action in the IDE, or press "p" in the console), to see the
           // wireframe for each widget.
           mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+          children: [],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: _getWeatherForecast,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ),
